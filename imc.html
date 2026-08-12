@@ -1,36 +1,76 @@
-!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Calculadora de IMC</title>
   <style>
-    body{font-family:Segoe UI,Arial,Helvetica,sans-serif;max-width:520px;margin:40px auto;padding:0 16px}
-    label{display:block;margin:8px 0}
-    input{padding:8px;width:100%;box-sizing:border-box;margin-top:4px}
-    button{margin-top:12px;padding:8px 12px}
-    #resultado{margin-top:16px;font-weight:600}
+    :root{
+      --bg:#f6f8fb;--card:#ffffff;--brand:#0b5fff;--muted:#6b7280;--danger:#dc2626;--success:#16a34a;--radius:12px
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 100%);display:flex;align-items:center;justify-content:center;padding:32px}
+    .card{width:100%;max-width:760px;background:var(--card);border-radius:var(--radius);box-shadow:0 6px 24px rgba(11,23,64,0.08);padding:24px}
+    header{display:flex;align-items:center;gap:16px}
+    h1{margin:0;font-size:1.25rem}
+    p.lead{margin:6px 0 18px;color:var(--muted)}
+    form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    fieldset{grid-column:1/-1;border:0;padding:0;margin:0}
+    label{display:block;font-size:0.95rem;color:#111827;margin-bottom:6px}
+    input{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;font-size:1rem}
+    input:focus{outline:none;box-shadow:0 0 0 4px rgba(11,95,255,0.12);border-color:var(--brand)}
+    .controls{display:flex;gap:8px;grid-column:1/-1;margin-top:6px}
+    button{background:var(--brand);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+    button.secondary{background:#f3f4f6;color:#111827}
+    #nota{color:var(--muted);font-size:0.9rem;grid-column:1/-1}
+    #resultado{grid-column:1/-1;margin-top:12px;padding:12px;border-radius:8px;font-weight:600}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media (max-width:560px){form{grid-template-columns:1fr}header{flex-direction:column;align-items:flex-start}button{width:100%}}
   </style>
 </head>
 <body>
-  <h1>Calculadora de IMC</h1>
-  <form id="imcForm">
-    <label>
-      Altura (m)
-      <input id="altura" placeholder="ex: 1,75" inputmode="decimal" autocomplete="off" required pattern="^\s*\d+([.,]\d+)?\s*$" title="Use apenas números; ex: 1,75 ou 1.75">
-    </label>
-    <label>
-      Peso (kg)
-      <input id="peso" placeholder="ex: 59,5" inputmode="decimal" autocomplete="off" required pattern="^\s*\d+([.,]\d+)?\s*$" title="Use apenas números; ex: 59,5 ou 59.5">
-    </label>
-    <button type="submit">Calcular</button>
-  </form>
-  <div id="resultado" aria-live="polite"></div>
+  <main class="card" role="main">
+    <header>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#eef2ff"/><path d="M12 7v5l3 3" stroke="#0b5fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <h1>Calculadora de IMC</h1>
+        <p class="lead">Digite sua altura e peso. Use vírgula ou ponto (ex.: 1,75 ou 175).</p>
+      </div>
+    </header>
+
+    <form id="imcForm" novalidate>
+      <fieldset>
+        <label for="altura">Altura</label>
+        <input id="altura" name="altura" type="text" inputmode="decimal" placeholder="ex: 1,75 ou 175" autocomplete="off" required pattern="^\s*\d+([.,]\d+)?\s*$" aria-describedby="alturaHelp alturaError">
+        <div id="alturaHelp" class="sr-only">Em metros ou centímetros. Use vírgula ou ponto.</div>
+        <div id="alturaError" class="sr-only" aria-live="polite"></div>
+
+        <label for="peso">Peso</label>
+        <input id="peso" name="peso" type="text" inputmode="decimal" placeholder="ex: 59,5" autocomplete="off" required pattern="^\s*\d+([.,]\d+)?\s*$" aria-describedby="pesoError">
+        <div id="pesoError" class="sr-only" aria-live="polite"></div>
+      </fieldset>
+
+      <div class="controls">
+        <button type="submit">Calcular</button>
+        <button type="button" class="secondary" id="limpar">Limpar</button>
+      </div>
+
+      <div id="nota" aria-hidden="true"></div>
+      <div id="resultado" role="status" aria-live="polite"></div>
+    </form>
+  </main>
 
   <script>
+    const form = document.getElementById('imcForm');
+    const alturaEl = document.getElementById('altura');
+    const pesoEl = document.getElementById('peso');
+    const notaEl = document.getElementById('nota');
+    const resultadoEl = document.getElementById('resultado');
+    const limparBtn = document.getElementById('limpar');
+
     function parseNumber(str){
       if(!str) return NaN;
-      // aceita vírgula ou ponto como separador decimal
       str = String(str).trim().replace(/,/g, '.');
       return parseFloat(str);
     }
@@ -42,23 +82,53 @@
       return 'Obesidade';
     }
 
-    document.getElementById('imcForm').addEventListener('submit', function(e){
-      e.preventDefault();
-      var altura = parseNumber(document.getElementById('altura').value);
-      var peso = parseNumber(document.getElementById('peso').value);
-      var out = document.getElementById('resultado');
+    function showError(el, message){
+      el.textContent = message;
+      el.classList.remove('sr-only');
+      setTimeout(()=>{el.classList.add('sr-only');}, 4000);
+    }
 
-      if(!(altura > 0) || !(peso > 0)){
-        out.style.color = 'crimson';
-        out.textContent = 'Por favor insira altura e peso válidos (use vírgula ou ponto). Ex: 1,75 59,5';
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      resultadoEl.textContent = '';
+      notaEl.textContent = '';
+
+      // HTML5 pattern check
+      if(!alturaEl.checkValidity()){
+        showError(document.getElementById('alturaError'), 'Altura inválida. Ex: 1,75 ou 175');
+        alturaEl.focus();
+        return;
+      }
+      if(!pesoEl.checkValidity()){
+        showError(document.getElementById('pesoError'), 'Peso inválido. Ex: 59,5');
+        pesoEl.focus();
         return;
       }
 
-      var imc = peso / (altura * altura);
-      out.style.color = '';
-      out.textContent = 'IMC: ' + imc.toFixed(2) + ' — ' + categoriza(imc);
-    });
-  </script>
-</body>
-</html>
+      let altura = parseNumber(alturaEl.value);
+      let peso = parseNumber(pesoEl.value);
 
+      if(altura > 3){
+        altura = altura / 100;
+        notaEl.textContent = 'Altura interpretada como centímetros e convertida para metros.';
+        // desaparecer após 4s
+        setTimeout(()=>{notaEl.textContent = '';}, 4000);
+      }
+
+      if(!(altura > 0) || !(peso > 0) || Number.isNaN(altura) || Number.isNaN(peso)){
+        resultadoEl.style.color = 'var(--danger)';
+        resultadoEl.textContent = 'Erro: altura ou peso inválidos.';
+        return;
+      }
+
+      const imc = peso / (altura * altura);
+      resultadoEl.style.color = imc >= 30 ? 'var(--danger)' : (imc >= 25 ? '#b45309' : 'var(--success)');
+      resultadoEl.textContent = `IMC: ${imc.toFixed(2)} — ${categoriza(imc)}`;
+    });
+
+    limparBtn.addEventListener('click', function(){
+      alturaEl.value = '';
+      pesoEl.value = '';
+      resultadoEl.textContent = '';
+      notaEl.textContent = '';
+      alturaEl.focus();
