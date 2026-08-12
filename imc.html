@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Calculadora de IMC</title>
+  <style>
+    body{font-family:Segoe UI,Arial,Helvetica,sans-serif;max-width:520px;margin:40px auto;padding:0 16px}
+    label{display:block;margin:8px 0}
+    input{padding:8px;width:100%;box-sizing:border-box;margin-top:4px}
+    button{margin-top:12px;padding:8px 12px}
+    #resultado{margin-top:16px;font-weight:600}
+  </style>
+</head>
+<body>
+  <h1>Calculadora de IMC</h1>
+  <form id="imcForm">
+    <label>
+      Altura (m)
+      <input id="altura" placeholder="ex: 1,75" inputmode="decimal" autocomplete="off">
+    </label>
+    <label>
+      Peso (kg)
+      <input id="peso" placeholder="ex: 59,5" inputmode="decimal" autocomplete="off">
+    </label>
+    <button type="submit">Calcular</button>
+  </form>
+  <div id="resultado" aria-live="polite"></div>
+
+  <script>
+    function parseNumber(str){
+      if(!str) return NaN;
+      // aceita vírgula ou ponto como separador decimal
+      str = String(str).trim().replace(/,/g, '.');
+      return parseFloat(str);
+    }
+
+    function categoriza(imc){
+      if(imc < 18.5) return 'Abaixo do peso';
+      if(imc < 25) return 'Peso normal';
+      if(imc < 30) return 'Sobrepeso';
+      return 'Obesidade';
+    }
+
+    document.getElementById('imcForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var altura = parseNumber(document.getElementById('altura').value);
+      var peso = parseNumber(document.getElementById('peso').value);
+      var out = document.getElementById('resultado');
+
+      if(!(altura > 0) || !(peso > 0)){
+        out.style.color = 'crimson';
+        out.textContent = 'Por favor insira altura e peso válidos (use vírgula ou ponto). Ex: 1,75 59,5';
+        return;
+      }
+
+      var imc = peso / (altura * altura);
+      out.style.color = '';
+      out.textContent = 'IMC: ' + imc.toFixed(2) + ' — ' + categoriza(imc);
+    });
+  </script>
+</body>
+</html>
+*** End Patch
